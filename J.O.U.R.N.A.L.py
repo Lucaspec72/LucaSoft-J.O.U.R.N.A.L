@@ -229,6 +229,9 @@ while(userConnected == False):
     currentUser = askUser()
     if(currentUser == "exit"):
         write(dialogue.loginCancel())
+        if msvcrt.kbhit():
+            msvcrt.getch()
+        cl()
         raise SystemExit(0)
     if currentUser in user:
         write(dialogue.loginPwdPrompt())
@@ -333,22 +336,22 @@ while(True):
         if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}.entry')):
             try:
                 pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entryToView}.entry', f"{dataFolder}temp.txt", str(currentPassword), bufferSize)
-            except ValueError:
-                print("ERR : Wrong Password")
-            file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
-            listOfLines = file.readlines()
-            file.close()
-            if(os.path.exists(f'{dataFolder}temp.txt')):
-                os.remove(f'{dataFolder}temp.txt')
-            printText("Entry found, Displaying Log :\n\n")
-            time.sleep(0.5)
-            clear()
-            for line in listOfLines:
-                printText(f'{line}\n')
-                winsound.Beep(1650, 20)
-                time.sleep(0.3)
-            printText("\n\n End of Log \n")
-            endLineSound()
+                file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
+                listOfLines = file.readlines()
+                file.close()
+                if(os.path.exists(f'{dataFolder}temp.txt')):
+                    os.remove(f'{dataFolder}temp.txt')
+                printText("Entry found, Displaying Log :\n\n")
+                time.sleep(0.5)
+                clear()
+                for line in listOfLines:
+                    printText(f'{line}\n')
+                    winsound.Beep(1650, 20)
+                    time.sleep(0.3)
+                printText("\n\n End of Log \n")
+                endLineSound()
+            except :
+                print("/!\\ ERROR : Wrong Password /!\\")
             printText("\nPress Enter to go back to Main Menu")
             resetWriteSpeed()
             getpass.getpass("")
@@ -363,25 +366,26 @@ while(True):
                 entryNum = entryToView.replace(".entry","")
                 try:
                     pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entryToView}', f"{dataFolder}temp.txt", str(currentPassword), bufferSize) 
+                    file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
+                    listOfLines = file.readlines()
+                    file.close()
+                    if(os.path.exists(f'{dataFolder}temp.txt')):
+                        os.remove(f'{dataFolder}temp.txt')
+                    for line in listOfLines:
+                        printText(f'{line}\n')
+                        winsound.Beep(1650, 20)
+                        time.sleep(0.3)
+                    printText("\n\n End of Log \n\n")
+                    endLineSound()
+                    printText(f"Finished printing entry n°") ; print(f'{colors.special}', end="") ; printText(f"{entryNum}") ; print(f'{colors.message}', end="") ; printText(f" / ") ; print(f'{colors.special}', end="") ; printText(f"{len(folderFiles)}") ; print(f'{colors.message}', end="") ; printText(f"\n")
+                    printText('Press Enter to continue, or type "exit" to stop : ')
+                    resetWriteSpeed()
+                    stopReadLogs = input(f"{colors.special}")
+                    print(f'{colors.message}')
+                    continue
                 except ValueError:
-                    print("ERR : Wrong Password")
-                file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
-                listOfLines = file.readlines()
-                file.close()
-                if(os.path.exists(f'{dataFolder}temp.txt')):
-                    os.remove(f'{dataFolder}temp.txt')
-                for line in listOfLines:
-                    printText(f'{line}\n')
-                    winsound.Beep(1650, 20)
-                    time.sleep(0.3)
-                printText("\n\n End of Log \n\n")
-                endLineSound()
-                printText(f"Finished printing entry n°") ; print(f'{colors.special}', end="") ; printText(f"{entryNum}") ; print(f'{colors.message}', end="") ; printText(f" / ") ; print(f'{colors.special}', end="") ; printText(f"{len(folderFiles)}") ; print(f'{colors.message}', end="") ; printText(f"\n")
-                printText('Press Enter to continue, or type "exit" to stop : ')
-                resetWriteSpeed()
-                stopReadLogs = input(f"{colors.special}")
-                print(f'{colors.message}')
-                continue
+                    print("/!\\ ERROR : Wrong Password /!\\")
+                    time.sleep(0.5)
             break
     elif(instruction == "5"):
         printText(f"\nAre you sure you want to import your log files ? (press ") ; print(f'{colors.label}', end="") ; printText(f"Y") ; print(f'{colors.message}', end="") ; printText(f") ")
@@ -417,6 +421,7 @@ while(True):
                 if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
     elif(instruction == "6"):
+        #batched modifications, test everything later
         printText(f"\nAre you sure you want to export all of your log files ? (press ") ; print(f'{colors.label}', end="") ; printText(f"Y") ; print(f'{colors.message}', end="") ; printText(f") ")
         endLineSound()
         resetWriteSpeed()
@@ -426,13 +431,19 @@ while(True):
             folderFiles = updateFolderFiles()
             if(os.path.exists(f"{dataFolder}exported_{currentUser}") == False):
                 os.mkdir(f"{dataFolder}exported_{currentUser}")
+            iter = 0
             for entry in folderFiles:
                 entryNum = entry.replace(".entry","")
-                pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entry}', f"{dataFolder}exported_{currentUser}/{entryNum}.log", str(currentPassword), bufferSize) 
-                printText(f"\nExported entry {entryNum}")
+                try:
+                    pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entry}', f"{dataFolder}exported_{currentUser}/{entryNum}.log", str(currentPassword), bufferSize) 
+                    printText(f"\nExported entry {entryNum}")
+                    iter += 1
+                except:
+                    printText(f"\n/!\\ ERROR : Wrong Password for {entry} /!\\")
+                    time.sleep(0.5)
                 winsound.Beep(1650, 20)
             exportedFiles = next(os.walk(f"{dataFolder}exported_{currentUser}"))[2]
-            printText(f'\n\nExported {len(exportedFiles)} entries to folder "{dataFolder}exported_{currentUser}"')
+            printText(f'\n\nExported {iter} entries to folder "{dataFolder}exported_{currentUser}"')
             endLineSound()
             resetWriteSpeed()
             successSound()
@@ -446,7 +457,8 @@ while(True):
         winsound.Beep(1700, 20)
         winsound.Beep(1500, 130)
         print(f'{colors.white}', end="")
-        msvcrt.getch()
+        if msvcrt.kbhit():
+            msvcrt.getch()
         cl()
         raise SystemExit(0)
 
