@@ -8,10 +8,6 @@ progVer = "0.7.4 (write() integration WIP version)"
 
 month = ['January','February','March','April','May','June','July','August','September','October','November','December']
 class dialogue:
-    def titleMessage():
-        text=['J.O.U.R.N.A.L      ',f'v{progVer}','        (C) Copyright 2021 Lucasoft']
-        style=[colors.data,colors.label,colors.data]
-        return text,style
     def loginMain():
         text=[f'Welcome to the ','J.O.U.R.N.A.L',', please enter your name : ']
         style=[colors.message,colors.special,colors.message]
@@ -124,6 +120,7 @@ class dialogue:
 class colors:
     label = '\033[38;2;220;140;60m'
     data = '\033[38;2;200;180;90m'
+    green = '\033[32m'
     red = '\033[91m'
     white = '\033[0m'
     message = '\033[38;2;220;140;60m'
@@ -210,6 +207,14 @@ def askUser():
     print(f'{colors.message}',end="")
     return prompt
 
+def longestInArray(array):
+    max_len = -1
+    for element in array: 
+        if(len(element) > max_len): 
+          max_len = len(element) 
+          #longest = element not currently used, might be useful later
+          return max_len
+
 #open users json dictionary, or define it if it doesn't exists.
 if os.path.exists(f"{dataFolder}users.json"):
     f = open(f"{dataFolder}users.json")
@@ -219,8 +224,6 @@ else:
 
 #sets userConnected to false, it's the flag that keeps the login loop going.
 userConnected = False
-cl()
-write(dialogue.titleMessage())
 #Login Loop
 while(userConnected == False):
     time.sleep(0.5)
@@ -321,9 +324,26 @@ while(True):
             write(dialogue.listEntries3())
         if(len(folderFiles) != 0):
             write(dialogue.listEntries4())
-            print(f'\n{colors.special}')
+            fileState = "Unknown"
+            fileStateColor = colors.special
+            print('\n')
             for file in folderFiles:
-                printText(f"    {file} \n")
+                print(colors.special, end="")
+                if(os.path.exists(f'{dataFolder}temp.txt')):
+                    os.remove(f'{dataFolder}temp.txt')
+                try:
+                    pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{file}', f"{dataFolder}temp.txt", str(currentPassword), bufferSize) 
+                    fileStateColor = colors.green
+                    fileState = "Readable"
+
+                except:
+                    fileStateColor = colors.red
+                    fileState = "Unreadable"
+                length = longestInArray(folderFiles)+13
+                toWrite = f"    file: {file}  "
+                offset = length - len(toWrite)
+                toWrite += ' ' * offset
+                printText(toWrite) ; print(fileStateColor,end='') ; printText(f'{fileState}\n')
                 winsound.Beep(1650, 20)
         write(dialogue.goBackToMain())
         getpass.getpass("")
