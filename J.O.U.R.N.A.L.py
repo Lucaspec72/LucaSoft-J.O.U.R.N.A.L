@@ -96,21 +96,21 @@ class dialogue:
         text=['Press Enter to go back to Main Menu']
         style=[colors.message]
         return text,style
-    def holder():
-        text=[]
-        style=[]
+    def viewEntry1():
+        text=['Select Which Entry to View : n°']
+        style=['']
         return text,style
-    def holder():
-        text=[]
-        style=[]
+    def viewEntry2():
+        text=['Entry found, Displaying Log...']
+        style=['']
         return text,style
-    def holder():
-        text=[]
-        style=[]
+    def viewEntry3():
+        text=['[}-----End of Log-----{]']
+        style=['\n']
         return text,style
-    def holder():
-        text=[]
-        style=[]
+    def errWrongPwd():
+        text=['/!\\ ERROR : Incorrect Password /!\\']
+        style=[colors.red]
         return text,style
     def holder():
         text=[]
@@ -137,7 +137,7 @@ def printText(str):
         print(letter, end="")
         sys.stdout.flush()
         time.sleep(writeSpeed)
-        if((letter == ",") and (writeSpeed != 0)):
+        if((letter == ",") or (letter == '.') and (writeSpeed != 0)):
             time.sleep(0.07)
         if msvcrt.kbhit():
             writeSpeed = 0
@@ -222,6 +222,10 @@ if os.path.exists(f"{dataFolder}users.json"):
 else:
     user = {}
 
+def removeTemptxt():
+    if(os.path.exists(f'{dataFolder}temp.txt')):
+        os.remove(f'{dataFolder}temp.txt')
+
 #sets userConnected to false, it's the flag that keeps the login loop going.
 userConnected = False
 #Login Loop
@@ -258,6 +262,7 @@ while(userConnected == False):
         write(dialogue.loginNewUsrPrompt())
         char = msvcrt.getch()
         if (char.lower() == b'y'):
+            #note : askUser() is used instead of getpass.getpass() to actually see what you're writing.
             write(dialogue.loginNewUsrPwd())
             currentPassword = askUser()
             write(dialogue.loginNewUsrPwdCfrm())
@@ -287,9 +292,8 @@ while(userConnected == False):
 #checks if user folder doesn't exists, and creates it if it doesn't.
 if(os.path.exists(f"{dataFolder}{currentUser}") == False):
     os.mkdir(f"{dataFolder}{currentUser}")
-
-if(os.path.exists(f'{dataFolder}temp.txt')):
-    os.remove(f'{dataFolder}temp.txt')
+#checks if the temp.txt folder exists.
+removeTemptxt()
 
 #main loop
 while(True):
@@ -309,8 +313,7 @@ while(True):
                 f.write(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}")
             pyAesCrypt.encryptFile(f"{dataFolder}temp.txt", f"{dataFolder}{currentUser}/{len(folderFiles)+1}.entry", str(currentPassword), bufferSize) 
             write(dialogue.createLog2())
-            if(os.path.exists(f'{dataFolder}temp.txt')):
-                os.remove(f'{dataFolder}temp.txt')
+            removeTemptxt()
             successSound()
         else:
             write(dialogue.createLog3())
@@ -329,8 +332,7 @@ while(True):
             print('\n')
             for file in folderFiles:
                 print(colors.special, end="")
-                if(os.path.exists(f'{dataFolder}temp.txt')):
-                    os.remove(f'{dataFolder}temp.txt')
+                removeTemptxt()
                 try:
                     pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{file}', f"{dataFolder}temp.txt", str(currentPassword), bufferSize) 
                     fileStateColor = colors.green
@@ -339,6 +341,7 @@ while(True):
                 except:
                     fileStateColor = colors.red
                     fileState = "Unreadable"
+                removeTemptxt()
                 length = longestInArray(folderFiles)+13
                 toWrite = f"    file: {file}  "
                 offset = length - len(toWrite)
@@ -348,32 +351,27 @@ while(True):
         write(dialogue.goBackToMain())
         getpass.getpass("")
     elif(instruction == "3"):
-        printText('Select Which Entry to View : n°')
-        endLineSound()
-        resetWriteSpeed()
-        entryToView = input(f"{colors.special}")
-        print(f'{colors.message}')
+        write(dialogue.viewEntry1)
+        entryToView = askUser()
         if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}.entry')):
             try:
                 pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entryToView}.entry', f"{dataFolder}temp.txt", str(currentPassword), bufferSize)
                 file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
                 listOfLines = file.readlines()
                 file.close()
-                if(os.path.exists(f'{dataFolder}temp.txt')):
-                    os.remove(f'{dataFolder}temp.txt')
-                printText("Entry found, Displaying Log :\n\n")
+                removeTemptxt()
+                write(dialogue.viewEntry2())
                 time.sleep(0.5)
                 clear()
                 for line in listOfLines:
                     printText(f'{line}\n')
                     winsound.Beep(1650, 20)
                     time.sleep(0.3)
-                printText("\n\n End of Log \n")
-                endLineSound()
+                write(dialogue.viewEntry3())
             except :
-                print("/!\\ ERROR : Wrong Password /!\\")
-            printText("\nPress Enter to go back to Main Menu")
-            resetWriteSpeed()
+                write(dialogue.errWrongPwd())
+
+            write(dialogue.goBackToMain())
             getpass.getpass("")
     elif(instruction == "4"):
         folderFiles = updateFolderFiles()
@@ -389,8 +387,7 @@ while(True):
                     file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
                     listOfLines = file.readlines()
                     file.close()
-                    if(os.path.exists(f'{dataFolder}temp.txt')):
-                        os.remove(f'{dataFolder}temp.txt')
+                    removeTemptxt()
                     for line in listOfLines:
                         printText(f'{line}\n')
                         winsound.Beep(1650, 20)
@@ -404,7 +401,7 @@ while(True):
                     print(f'{colors.message}')
                     continue
                 except ValueError:
-                    print("/!\\ ERROR : Wrong Password /!\\")
+                    write(dialogue.errWrongPwd())
                     time.sleep(0.5)
             break
     elif(instruction == "5"):
@@ -459,7 +456,7 @@ while(True):
                     printText(f"\nExported entry {entryNum}")
                     iter += 1
                 except:
-                    printText(f"\n/!\\ ERROR : Wrong Password for {entry} /!\\")
+                    write(dialogue.errWrongPwd())
                     time.sleep(0.5)
                 winsound.Beep(1650, 20)
             exportedFiles = next(os.walk(f"{dataFolder}exported_{currentUser}"))[2]
