@@ -104,13 +104,13 @@ class dialogue:
         text=['Entry found, Displaying Log...']
         style=['']
         return text,style
-    def viewEntry3():
+    def eol():
         text=['[}-----End of Log-----{]']
         style=['\n']
         return text,style
     def errWrongPwd():
-        text=['/!\\ ERROR : Incorrect Password /!\\']
-        style=[colors.red]
+        text=['/!\\ ERROR : Could not decrypt file, Password is incorrect /!\\','This log was encrypted using a different encryption key than yours.']
+        style=[colors.red,f'\n{colors.darkRed}']
         return text,style
     def holder():
         text=[]
@@ -122,6 +122,7 @@ class colors:
     data = '\033[38;2;200;180;90m'
     green = '\033[32m'
     red = '\033[91m'
+    darkRed = '\033[38;2;160;0;0m'
     white = '\033[0m'
     message = '\033[38;2;220;140;60m'
     special = '\033[38;2;180;150;120m'
@@ -238,6 +239,7 @@ while(userConnected == False):
         write(dialogue.loginCancel())
         if msvcrt.kbhit():
             msvcrt.getch()
+        print(f'{colors.white}', end="")
         cl()
         raise SystemExit(0)
     if currentUser in user:
@@ -367,7 +369,7 @@ while(True):
                     printText(f'{line}\n')
                     winsound.Beep(1650, 20)
                     time.sleep(0.3)
-                write(dialogue.viewEntry3())
+                write(dialogue.eol())
             except :
                 write(dialogue.errWrongPwd())
 
@@ -392,18 +394,16 @@ while(True):
                         printText(f'{line}\n')
                         winsound.Beep(1650, 20)
                         time.sleep(0.3)
-                    printText("\n\n End of Log \n\n")
-                    endLineSound()
+                    write(dialogue.eol())
                     printText(f"Finished printing entry n°") ; print(f'{colors.special}', end="") ; printText(f"{entryNum}") ; print(f'{colors.message}', end="") ; printText(f" / ") ; print(f'{colors.special}', end="") ; printText(f"{len(folderFiles)}") ; print(f'{colors.message}', end="") ; printText(f"\n")
-                    printText('Press Enter to continue, or type "exit" to stop : ')
-                    resetWriteSpeed()
-                    stopReadLogs = input(f"{colors.special}")
-                    print(f'{colors.message}')
-                    continue
                 except ValueError:
                     write(dialogue.errWrongPwd())
-                    time.sleep(0.5)
-            break
+                    printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
+                    printText(f'\nERROR : could not print entry n°{entryNum} ({entryToView}).')
+                    resetWriteSpeed()
+                printText('\nPress Enter to continue, or type "exit" to stop : ')
+                resetWriteSpeed()
+                stopReadLogs = askUser()
     elif(instruction == "5"):
         printText(f"\nAre you sure you want to import your log files ? (press ") ; print(f'{colors.label}', end="") ; printText(f"Y") ; print(f'{colors.message}', end="") ; printText(f") ")
         endLineSound()
