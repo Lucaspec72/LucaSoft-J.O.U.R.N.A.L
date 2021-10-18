@@ -106,7 +106,7 @@ class dialogue:
         return text,style
     def eol():
         text=['[}-----End of Log-----{]']
-        style=['\n']
+        style=[f'\n{colors.special}']
         return text,style
     def errWrongPwd():
         text=['/!\\ ERROR : Could not decrypt file, Password is incorrect /!\\','This log was encrypted using a different encryption key than yours.']
@@ -353,7 +353,7 @@ while(True):
         write(dialogue.goBackToMain())
         getpass.getpass("")
     elif(instruction == "3"):
-        write(dialogue.viewEntry1)
+        write(dialogue.viewEntry1())
         entryToView = askUser()
         if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}.entry')):
             try:
@@ -395,6 +395,7 @@ while(True):
                         winsound.Beep(1650, 20)
                         time.sleep(0.3)
                     write(dialogue.eol())
+                    print('\n\n')
                     printText(f"Finished printing entry n°") ; print(f'{colors.special}', end="") ; printText(f"{entryNum}") ; print(f'{colors.message}', end="") ; printText(f" / ") ; print(f'{colors.special}', end="") ; printText(f"{len(folderFiles)}") ; print(f'{colors.message}', end="") ; printText(f"\n")
                 except ValueError:
                     write(dialogue.errWrongPwd())
@@ -418,9 +419,8 @@ while(True):
             printText('\nPlease type "') ; print(f'{colors.data}', end="") ; printText(f'continue') ; print(f'{colors.message}', end="") ; printText(f'" to continue, otherwise operation will be canceled : ')
             endLineSound()
             resetWriteSpeed()
-            confirmImport = input(f"{colors.special}")
-            print(f'{colors.message}')
-            if(confirmImport == "continue"):
+            confirmImport = askUser()
+            if(confirmImport.lower() == "continue"):
                 folderFiles = updateFolderFilesImport()
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
