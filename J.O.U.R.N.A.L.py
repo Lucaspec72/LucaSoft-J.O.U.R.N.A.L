@@ -134,7 +134,7 @@ class dialogue:
         return text,style
     def importedEntryMessage():
         text=['Inported entry ',f'{entry}']
-        style=['',colors.message]
+        style=[colors.message,colors.data]
         return text,style
     def exportFiles1():
         text=['Are you sure you want to export all of your log files ? (press ','Y',')']
@@ -142,7 +142,7 @@ class dialogue:
         return text,style
     def exportedEntryMessage():
         text=['Exported entry n°',f'{entryNum}']
-        style=['',colors.message]
+        style=[colors.message,colors.data]
         return text,style
     def exportFilesResult():
         text=['Exported ',f'{iter}',' entries to folder "',f'{dataFolder}exported_{currentUser}','"']
@@ -470,15 +470,14 @@ while(True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
                 successSound()
                 write(dialogue.goBackToMain())
-                getpass.getpass()
+                getpass.getpass('')
             else:
                 if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
     elif(instruction == "6"):
-        #batched modifications, test everything later
         write(dialogue.exportFiles1())
         confirmExport = msvcrt.getch()
-        if (confirmImport.lower() == b"y"):
+        if (confirmExport.lower() == b"y"):
             folderFiles = updateFolderFiles()
             if(os.path.exists(f"{dataFolder}exported_{currentUser}") == False):
                 os.mkdir(f"{dataFolder}exported_{currentUser}")
@@ -497,7 +496,7 @@ while(True):
             write(dialogue.exportFilesResult())
             successSound()
             write(dialogue.goBackToMain())
-            getpass.getpass()
+            getpass.getpass('')
     elif((instruction == "0") or (instruction.lower() == "exit")):
         cl()
         write(dialogue.exitMessage())
