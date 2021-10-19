@@ -1,10 +1,66 @@
-import time, sys, hashlib, datetime, json, os, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt
+import time, sys, hashlib, datetime, json, os, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
 bufferSize = 64 * 1024 
 dataFolder = 'C:/LucaSoft J.O.U.R.N.A.L/'
 writeSpeed = 0.03
 
 #PROGRAM VERSION
-progVer = "0.7.5"
+progVer = "0.7.6 (fileSystem Rework version)"
+
+
+
+#MEMO, ADD ERROR HANDLING TO EVERYTHING
+
+#new file system functions, might need to be improved at a later date
+def encrypt(data, pwd):
+    global bufferSize
+    try:
+        pwd.decode("utf8")
+    except UnicodeError:
+        pwd = pwd.encode("utf8")
+    data = bytes(data,'UTF-8')
+    input = io.BytesIO(data)
+    output = io.BytesIO()
+    pyAesCrypt.encryptStream(input, output, str(pwd), bufferSize)
+    return output.getvalue()
+def decrypt(encryptedData, pwd):
+    global bufferSize
+    try:
+        pwd.decode("utf8")
+    except UnicodeError:
+        pwd = pwd.encode("utf8")
+    input = io.BytesIO(encryptedData)
+    output = io.BytesIO()
+    ctlen = len(encryptedData)
+    pyAesCrypt.decryptStream(input, output, str(pwd), bufferSize, ctlen)
+    return output.getvalue()
+
+def toText(input):
+    return str(input.decode("utf-8"))
+
+def getEntry(input):
+    return bytes.fromhex(input['entry'])
+
+def readEntryFile(user,entry):
+    global dataFolder
+    fullPath = f'{dataFolder}{user}/{entry}'
+    if(os.path.exists(fullPath)):
+        try:
+            with open(fullPath,'r') as file:
+                return json.load(file)
+        except:
+            return False
+
+def writeEntryFile(user,pwd,entry):
+    folderFiles = updateFolderFiles()
+    try:
+        pwd.decode("utf8")
+    except UnicodeError:
+        pwd = pwd.encode("utf8")
+    hashKey = hashlib.sha1(pwd).hexdigest()
+    writeToFile = {'user': user,'hashKey': hashKey,'entry': entry.hex()}
+    lastEntry = int(folderFiles[-1].replace(".entry",""))
+    with open(f'{dataFolder}{user}/{lastEntry+1}.entry', 'w') as file:
+        json.dump(writeToFile, file)
 
 month = ['January','February','March','April','May','June','July','August','September','October','November','December']
 class dialogue:
@@ -160,12 +216,17 @@ class dialogue:
 class colors:
     label = '\033[38;2;220;140;60m'
     data = '\033[38;2;200;180;90m'
+    readable = '\033[32m'
+    unreadable = '\033[91m'
+    corrupted = '\033[38;2;193;56;0m'
     green = '\033[32m'
     red = '\033[91m'
     darkRed = '\033[38;2;160;0;0m'
     white = '\033[0m'
     message = '\033[38;2;220;140;60m'
     special = '\033[38;2;180;150;120m'
+    def get(color):
+        return getattr(colors, color)
 
 #creates the Data folder ('C:/LucaSoft J.O.U.R.N.A.L/') if it doesn't exists
 if(os.path.exists(f"{dataFolder}") == False):
@@ -236,7 +297,9 @@ def updateFolderFilesImport():
     for root, dirs, files in os.walk( f"{dataFolder}import_{currentUser}"):
         for file in files:
             if file.endswith(".log"):
-                filesArray.append(file)
+                fileNum = file.replace(".log","")
+                filesArray.insert(int(fileNum)-1,file)
+                # filesArray.append(file)
     return filesArray 
 
 #defines clear()
@@ -288,8 +351,8 @@ while(userConnected == False):
         write(dialogue.loginPwdPrompt())
         currentPassword = getpass.getpass("")
         currentPassword = currentPassword.encode("utf8")
-        dgst = hashlib.sha1(currentPassword).hexdigest()
-        if dgst == user[currentUser]['password'] :
+        hashKey = hashlib.sha1(currentPassword).hexdigest()
+        if hashKey == user[currentUser]['password'] :
             currentTime = datetime.datetime.now()
             userConnected = True
             if currentTime.hour < 12:
@@ -314,8 +377,8 @@ while(userConnected == False):
             if((currentPassword==currentPassword2) & (currentPassword != "")):
                 del(currentPassword2)
                 currentPassword = currentPassword.encode("utf8")
-                dgst = hashlib.sha1(currentPassword).hexdigest()
-                user[currentUser] = {'password': dgst}
+                hashKey = hashlib.sha1(currentPassword).hexdigest()
+                user[currentUser] = {'password': hashKey}
                 with open(f"{dataFolder}users.json", 'w') as f:
                     json.dump(user, f)
                 if(os.path.exists(f"{dataFolder}{currentUser}") == False):
@@ -337,7 +400,7 @@ while(userConnected == False):
 if(os.path.exists(f"{dataFolder}{currentUser}") == False):
     os.mkdir(f"{dataFolder}{currentUser}")
 #checks if the temp.txt folder exists.
-removeTemptxt()
+
 
 #main loop
 while(True):
@@ -352,13 +415,10 @@ while(True):
         write(dialogue.createLog1())
         logEntry = texteditor.open(encoding='utf8')
         if(logEntry != ""):
-            with open(f"{dataFolder}temp.txt", 'w',encoding='utf8') as f:
-                timeFormated = datetime.datetime.now()
-                f.write(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}")
-            pyAesCrypt.encryptFile(f"{dataFolder}temp.txt", f"{dataFolder}{currentUser}/{len(folderFiles)+1}.entry", str(currentPassword), bufferSize) 
-            write(dialogue.createLog2())
-            removeTemptxt()
-            successSound()
+             timeFormated = datetime.datetime.now()
+             writeEntryFile(currentUser,currentPassword,encrypt(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}",currentPassword))
+             write(dialogue.createLog2())
+             successSound()
         else:
             write(dialogue.createLog3())
     elif(instruction == "2"):
@@ -371,50 +431,40 @@ while(True):
             write(dialogue.listEntries3())
         if(len(folderFiles) != 0):
             write(dialogue.listEntries4())
-            fileState = "Unknown"
-            fileStateColor = colors.special
-            print('\n')
+            length = longestInArray(folderFiles)+13
             for file in folderFiles:
-                print(colors.special, end="")
-                removeTemptxt()
-                try:
-                    pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{file}', f"{dataFolder}temp.txt", str(currentPassword), bufferSize) 
-                    fileStateColor = colors.green
-                    fileState = "Readable"
-
-                except:
-                    fileStateColor = colors.red
-                    fileState = "Unreadable"
-                removeTemptxt()
-                length = longestInArray(folderFiles)+13
                 toWrite = f"    file: {file}  "
                 offset = length - len(toWrite)
                 toWrite += ' ' * offset
-                printText(toWrite) ; print(fileStateColor,end='') ; printText(f'{fileState}\n')
-                winsound.Beep(1650, 20)
+                fileData = readEntryFile(currentUser,file)
+                if(fileData):
+                    isReadable = "unreadable"
+                    if(fileData['hashKey'] == hashKey):
+                        isReadable = "readable"
+                    write([[toWrite,isReadable,'   Registered Owner: ',fileData['user']],[colors.message,colors.get(isReadable),colors.message,colors.data]],1)
+                else:
+                    isReadable = "corrupted"
+                    write([[toWrite,isReadable,'   There was a error while reading the file, it is either corrupted or in a incompatible format.'],[colors.message,colors.get(isReadable),colors.red]],1)
         write(dialogue.goBackToMain())
         getpass.getpass("")
     elif(instruction == "3"):
         write(dialogue.viewEntry1())
         entryToView = askUser()
         if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}.entry')):
-            try:
-                pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entryToView}.entry', f"{dataFolder}temp.txt", str(currentPassword), bufferSize)
-                file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
-                listOfLines = file.readlines()
-                file.close()
-                removeTemptxt()
+            fileData = readEntryFile(currentUser,f'{entryToView}.entry')
+            #check if file loaded
+            if(fileData):
+                entry = toText(decrypt(getEntry(fileData),currentPassword))
                 write(dialogue.viewEntry2())
                 time.sleep(0.5)
                 clear()
-                for line in listOfLines:
+                for line in entry.splitlines():
                     printText(f'{line}\n')
                     winsound.Beep(1650, 20)
                     time.sleep(0.3)
                 write(dialogue.eol())
-            except ValueError :
+            else :
                 write(dialogue.errWrongPwd())
-
             write(dialogue.goBackToMain())
             getpass.getpass("")
     elif(instruction == "4"):
