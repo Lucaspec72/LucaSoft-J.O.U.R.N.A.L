@@ -4,7 +4,7 @@ dataFolder = 'C:/LucaSoft J.O.U.R.N.A.L/'
 writeSpeed = 0.03
 
 #PROGRAM VERSION
-progVer = "0.7.4 (write() integration WIP version)"
+progVer = "0.7.5"
 
 month = ['January','February','March','April','May','June','July','August','September','October','November','December']
 class dialogue:
