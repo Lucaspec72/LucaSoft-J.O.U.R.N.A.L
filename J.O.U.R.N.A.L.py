@@ -132,9 +132,9 @@ class dialogue:
         text=['Imported ',f'{entriesImported}',' entries to folder "',f'{dataFolder}{currentUser}','"']
         style=['',colors.data,colors.message,colors.data,colors.message]
         return text,style
-    def holder():
-        text=[]
-        style=[]
+    def importedEntryMessage():
+        text=[f'Inported entry ',f'{entry}']
+        style=['',colors.message]
         return text,style
     def holder():
         text=[]
@@ -443,7 +443,7 @@ while(True):
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
                     pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
-                    printText(f"\nInported entry {entryNum}")
+                    write(dialogue.importedEntryMessage())
                     entriesImported += 1
                     winsound.Beep(1650, 20)
                 inportedFiles = updateFolderFiles()
