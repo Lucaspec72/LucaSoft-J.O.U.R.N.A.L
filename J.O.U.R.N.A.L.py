@@ -112,6 +112,30 @@ class dialogue:
         text=['/!\\ ERROR : Could not decrypt file, Password is incorrect /!\\','This log was encrypted using a different encryption key than yours.']
         style=[colors.red,f'\n{colors.darkRed}']
         return text,style
+    def readAllEndMessage():
+        text=['Finished printing entry n°',f'{entryNum}',' / ',f"{len(folderFiles)}"]
+        style=['',colors.special,colors.message,colors.special]
+        return text,style
+    def continueOrExit():
+        text=['Press Enter to continue, or type "exit" to stop : ']
+        style=['']
+        return text,style
+    def importFiles1():
+        text=['Are you sure you want to import your log files ? (press ','Y',')']
+        style=['',colors.label,colors.message]
+        return text,style
+    def importFilesConfirm():
+        text=['Please put all your log files in the "',f'{dataFolder}import_{currentUser}',f'" folder, with name formating entrynumber.log (exemple : ',f'1.log',' )','/!\\ DISCLAIMER : CURRENT ENTRIES WILL GET OVERWRITTEN /!\\',' You may want to back up your logs first.','Please type "','continue','" to continue, otherwise operation will be canceled : ']
+        style=['',colors.data,colors.message,colors.data,colors.message,f'\n{colors.red}',colors.message,'\n',colors.data,colors.message]
+        return text,style            
+    def importFilesResult():
+        text=['Imported ',f'{entriesImported}',' entries to folder "',f'{dataFolder}{currentUser}','"']
+        style=['',colors.data,colors.message,colors.data,colors.message]
+        return text,style
+    def holder():
+        text=[]
+        style=[]
+        return text,style
     def holder():
         text=[]
         style=[]
@@ -370,7 +394,7 @@ while(True):
                     winsound.Beep(1650, 20)
                     time.sleep(0.3)
                 write(dialogue.eol())
-            except :
+            except ValueError :
                 write(dialogue.errWrongPwd())
 
             write(dialogue.goBackToMain())
@@ -396,41 +420,34 @@ while(True):
                         time.sleep(0.3)
                     write(dialogue.eol())
                     print('\n\n')
-                    printText(f"Finished printing entry n°") ; print(f'{colors.special}', end="") ; printText(f"{entryNum}") ; print(f'{colors.message}', end="") ; printText(f" / ") ; print(f'{colors.special}', end="") ; printText(f"{len(folderFiles)}") ; print(f'{colors.message}', end="") ; printText(f"\n")
+                    write(dialogue.readAllEndMessage())
                 except ValueError:
                     write(dialogue.errWrongPwd())
+                    #keep that for now, will change this when the new log file system is added
                     printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
                     printText(f'\nERROR : could not print entry n°{entryNum} ({entryToView}).')
                     resetWriteSpeed()
-                printText('\nPress Enter to continue, or type "exit" to stop : ')
-                resetWriteSpeed()
+                write(dialogue.continueOrExit())
                 stopReadLogs = askUser()
     elif(instruction == "5"):
-        printText(f"\nAre you sure you want to import your log files ? (press ") ; print(f'{colors.label}', end="") ; printText(f"Y") ; print(f'{colors.message}', end="") ; printText(f") ")
-        endLineSound()
-        resetWriteSpeed()
-        confirmExport = input(f"{colors.special}")
-        print(f'{colors.message}')
-        if (confirmExport == "y") or (confirmExport == "Y"):
+        write(dialogue.importFiles1())
+        confirmImport = msvcrt.getch()
+        if (confirmImport.lower() == b"y"):
             if(os.path.exists(f"{dataFolder}import_{currentUser}") == False):
                 os.mkdir(f"{dataFolder}import_{currentUser}")
-            printText(f'\nPlease put all your log files in the "') ; print(f'{colors.data}', end="") ; printText(f'{dataFolder}import_{currentUser}') ; print(f'{colors.message}', end="") ; printText(f'" folder, with name formating entrynumber.log (exemple : ') ; print(f'{colors.data}', end="") ; printText(f'1.log') ; print(f'{colors.message}', end="") ; printText(f' )')
-            printText(f'\n') ; print(f'{colors.red}', end="") ; printText(f'DISCLAIMER : CURRENT ENTRIES WILL GET OVERWRITTEN /!\\') ; print(f'{colors.message}', end="") ; printText(f' You may want to back up your logs first.')
-            printText('\nPlease type "') ; print(f'{colors.data}', end="") ; printText(f'continue') ; print(f'{colors.message}', end="") ; printText(f'" to continue, otherwise operation will be canceled : ')
-            endLineSound()
-            resetWriteSpeed()
+            write(dialogue.importFilesConfirm())
             confirmImport = askUser()
             if(confirmImport.lower() == "continue"):
+                entriesImported = 0
                 folderFiles = updateFolderFilesImport()
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
                     pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
                     printText(f"\nInported entry {entryNum}")
+                    entriesImported += 1
                     winsound.Beep(1650, 20)
                 inportedFiles = updateFolderFiles()
-                printText(f'\n\nInported {len(inportedFiles)} entries to folder "{dataFolder}{currentUser}"')
-                endLineSound()
-                resetWriteSpeed()
+                write(dialogue.importFilesResult())
                 if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
                 successSound()
