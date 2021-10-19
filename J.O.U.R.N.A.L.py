@@ -133,8 +133,24 @@ class dialogue:
         style=['',colors.data,colors.message,colors.data,colors.message]
         return text,style
     def importedEntryMessage():
-        text=[f'Inported entry ',f'{entry}']
+        text=['Inported entry ',f'{entry}']
         style=['',colors.message]
+        return text,style
+    def exportFiles1():
+        text=['Are you sure you want to export all of your log files ? (press ','Y',')']
+        style=['',colors.label,colors.message]
+        return text,style
+    def exportedEntryMessage():
+        text=['Exported entry n°',f'{entryNum}']
+        style=['',colors.message]
+        return text,style
+    def exportFilesResult():
+        text=['Exported ',f'{iter}',' entries to folder "',f'{dataFolder}exported_{currentUser}','"']
+        style=['',colors.data,colors.message,colors.data,colors.message]
+        return text,style
+    def exitMessage():
+        text=['Logging off, Have a good day ',f'{currentUser}','.']
+        style=['\n',colors.special,colors.message]
         return text,style
     def holder():
         text=[]
@@ -196,7 +212,7 @@ def updateFolderFiles():
     return filesArray 
 
 #PROTOTYPE writing system that handles the swapping between printText and print
-def write(obj):
+def write(obj,list=0):
     arrayText=obj[0]
     arrayDiv=obj[1]
     i=0
@@ -208,8 +224,10 @@ def write(obj):
             printText(Text)
             i += 1
         print(colors.message, end="")
-        endLineSound()
-        resetWriteSpeed()
+        if(list == 0):
+            print(colors.message, end="")
+            endLineSound()
+            resetWriteSpeed()
             
 
 #returns the list of all files in the current user's IMPORT folder that have the extension .log, only used once currently i think. 
@@ -443,7 +461,7 @@ while(True):
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
                     pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
-                    write(dialogue.importedEntryMessage())
+                    write(dialogue.importedEntryMessage(),1)
                     entriesImported += 1
                     winsound.Beep(1650, 20)
                 inportedFiles = updateFolderFiles()
@@ -451,17 +469,16 @@ while(True):
                 if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
                 successSound()
+                write(dialogue.goBackToMain())
+                getpass.getpass()
             else:
                 if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
                     shutil.rmtree(f"{dataFolder}import_{currentUser}")
     elif(instruction == "6"):
         #batched modifications, test everything later
-        printText(f"\nAre you sure you want to export all of your log files ? (press ") ; print(f'{colors.label}', end="") ; printText(f"Y") ; print(f'{colors.message}', end="") ; printText(f") ")
-        endLineSound()
-        resetWriteSpeed()
-        confirmExport = input(f"{colors.special}")
-        print(f'{colors.message}')
-        if (confirmExport == "y") or (confirmExport == "Y"):
+        write(dialogue.exportFiles1())
+        confirmExport = msvcrt.getch()
+        if (confirmImport.lower() == b"y"):
             folderFiles = updateFolderFiles()
             if(os.path.exists(f"{dataFolder}exported_{currentUser}") == False):
                 os.mkdir(f"{dataFolder}exported_{currentUser}")
@@ -470,21 +487,20 @@ while(True):
                 entryNum = entry.replace(".entry","")
                 try:
                     pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entry}', f"{dataFolder}exported_{currentUser}/{entryNum}.log", str(currentPassword), bufferSize) 
-                    printText(f"\nExported entry {entryNum}")
+                    write(dialogue.exportedEntryMessage(),1)
                     iter += 1
-                except:
+                except ValueError:
                     write(dialogue.errWrongPwd())
                     time.sleep(0.5)
                 winsound.Beep(1650, 20)
             exportedFiles = next(os.walk(f"{dataFolder}exported_{currentUser}"))[2]
-            printText(f'\n\nExported {iter} entries to folder "{dataFolder}exported_{currentUser}"')
-            endLineSound()
-            resetWriteSpeed()
+            write(dialogue.exportFilesResult())
             successSound()
+            write(dialogue.goBackToMain())
+            getpass.getpass()
     elif((instruction == "0") or (instruction.lower() == "exit")):
         cl()
-        printText(f'\n\nLogging off, Have a good day ') ; print(f'{colors.special}', end="") ; printText(f'{currentUser}') ; print(f'{colors.message}', end="") ; printText(f'.')
-        resetWriteSpeed()
+        write(dialogue.exitMessage())
         winsound.Beep(2300, 100)
         winsound.Beep(2100, 20)
         winsound.Beep(1900, 75)
