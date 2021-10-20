@@ -22,6 +22,7 @@ def encrypt(data, pwd):
     output = io.BytesIO()
     pyAesCrypt.encryptStream(input, output, str(pwd), bufferSize)
     return output.getvalue()
+
 def decrypt(encryptedData, pwd):
     global bufferSize
     try:
@@ -157,8 +158,8 @@ class dialogue:
         style=['']
         return text,style
     def viewEntry2():
-        text=['Entry found, Displaying Log...']
-        style=['']
+        text=['Entry ',f'{entryToView}',' found, Displaying Log...']
+        style=['',colors.special,colors.message]
         return text,style
     def eol():
         text=['[}-----End of Log-----{]']
@@ -217,8 +218,8 @@ class colors:
     label = '\033[38;2;220;140;60m'
     data = '\033[38;2;200;180;90m'
     readable = '\033[32m'
-    unreadable = '\033[91m'
-    corrupted = '\033[38;2;193;56;0m'
+    encrypted = '\033[91m'
+    unreadable = '\033[38;2;255;221;0m'
     green = '\033[32m'
     red = '\033[91m'
     darkRed = '\033[38;2;160;0;0m'
@@ -332,6 +333,20 @@ def removeTemptxt():
     if(os.path.exists(f'{dataFolder}temp.txt')):
         os.remove(f'{dataFolder}temp.txt')
 
+def fileStatus(currentUser,file,password=False):
+    if(password == False):
+        global currentPassword
+        password = currentPassword
+    fileData = readEntryFile(currentUser,file)
+    if(fileData):
+        try:
+            decrypt(getEntry(fileData),password)
+            isReadable= 2
+        except:
+            isReadable= 1
+    else:
+        isReadable= 0
+    return isReadable
 #sets userConnected to false, it's the flag that keeps the login loop going.
 userConnected = False
 #Login Loop
@@ -436,14 +451,16 @@ while(True):
                 toWrite = f"    file: {file}  "
                 offset = length - len(toWrite)
                 toWrite += ' ' * offset
-                fileData = readEntryFile(currentUser,file)
-                if(fileData):
-                    isReadable = "unreadable"
-                    if(fileData['hashKey'] == hashKey):
-                        isReadable = "readable"
+                isReadable = fileStatus(currentUser,file)
+                if(isReadable != 0):
+                    fileData = readEntryFile(currentUser,file)
+                    if(isReadable == 1):
+                        isReadable = "encrypted "
+                    if(isReadable == 2):
+                        isReadable = "readable  "
                     write([[toWrite,isReadable,'   Registered Owner: ',fileData['user']],[colors.message,colors.get(isReadable),colors.message,colors.data]],1)
                 else:
-                    isReadable = "corrupted"
+                    isReadable = "unreadable"
                     write([[toWrite,isReadable,'   There was a error while reading the file, it is either corrupted or in a incompatible format.'],[colors.message,colors.get(isReadable),colors.red]],1)
         write(dialogue.goBackToMain())
         getpass.getpass("")
@@ -476,24 +493,31 @@ while(True):
             else:
                 clear()
                 entryNum = entryToView.replace(".entry","")
-                try:
-                    pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entryToView}', f"{dataFolder}temp.txt", str(currentPassword), bufferSize) 
-                    file = open(f'{dataFolder}temp.txt', 'r', encoding='utf-8')
-                    listOfLines = file.readlines()
-                    file.close()
-                    removeTemptxt()
-                    for line in listOfLines:
-                        printText(f'{line}\n')
-                        winsound.Beep(1650, 20)
-                        time.sleep(0.3)
-                    write(dialogue.eol())
-                    print('\n\n')
-                    write(dialogue.readAllEndMessage())
-                except ValueError:
+                fileData = readEntryFile(currentUser,f'{entryToView}')
+                #check if file loaded
+                if(fileData):
+                    try:
+                        entry = toText(decrypt(getEntry(fileData),currentPassword))
+                        write(dialogue.viewEntry2())
+                        time.sleep(0.5)
+                        clear()
+                        for line in entry.splitlines():
+                            printText(f'{line}\n')
+                            winsound.Beep(1650, 20)
+                            time.sleep(0.3)
+                        write(dialogue.eol())
+                        print('\n\n')
+                        write(dialogue.readAllEndMessage())
+                    except:
+                        write(dialogue.errWrongPwd())
+                        printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
+                        printText(f'\nERROR : could not decrypt entry {entryToView}.')
+                        resetWriteSpeed()
+                else:
                     write(dialogue.errWrongPwd())
                     #keep that for now, will change this when the new log file system is added
                     printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
-                    printText(f'\nERROR : could not print entry n°{entryNum} ({entryToView}).')
+                    printText(f'\nERROR : could not read entry n°{entryNum} ({entryToView}).')
                     resetWriteSpeed()
                 write(dialogue.continueOrExit())
                 stopReadLogs = askUser()
