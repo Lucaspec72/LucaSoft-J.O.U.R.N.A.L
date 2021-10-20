@@ -1,10 +1,11 @@
 import time, sys, hashlib, datetime, json, os, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
+from pytimedinput import timedInput
 bufferSize = 64 * 1024 
 dataFolder = 'C:/LucaSoft J.O.U.R.N.A.L/'
 writeSpeed = 0.03
 
 #PROGRAM VERSION
-progVer = "0.7.6 (fileSystem Rework version)"
+progVer = "0.7.7"
 
 
 
@@ -532,7 +533,8 @@ while(True):
                 else:
                     write(dialogue.errReadFile(entryToView))
                 write(dialogue.continueOrExit())
-                stopReadLogs = askUser()
+                print(colors.special, end="")
+                stopReadLogs, timedOut = timedInput()
     elif(instruction == "5"):
         write(dialogue.importFiles1())
         confirmImport = msvcrt.getch()
