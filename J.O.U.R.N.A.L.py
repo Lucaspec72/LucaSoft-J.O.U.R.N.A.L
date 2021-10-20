@@ -41,12 +41,15 @@ def toText(input):
 def getEntry(input):
     return bytes.fromhex(input['entry'])
 
-def readEntryFile(user,entry):
+def readEntryFile(entry,user=False):
+    if(user == False):
+        global currentUser
+        user = currentUser
     global dataFolder
     fullPath = f'{dataFolder}{user}/{entry}'
     if(os.path.exists(fullPath)):
         try:
-            with open(fullPath,'r') as file:
+            with open(fullPath,'r', encoding="utf-8") as file:
                 return json.load(file)
         except:
             return False
@@ -59,8 +62,11 @@ def writeEntryFile(user,pwd,entry):
         pwd = pwd.encode("utf8")
     hashKey = hashlib.sha1(pwd).hexdigest()
     writeToFile = {'user': user,'hashKey': hashKey,'entry': entry.hex()}
-    lastEntry = int(folderFiles[-1].replace(".entry",""))
-    with open(f'{dataFolder}{user}/{lastEntry+1}.entry', 'w') as file:
+    if(len(folderFiles) > 0):
+        lastEntry = int(folderFiles[-1].replace(".entry",""))
+    else:
+        lastEntry = 0
+    with open(f'{dataFolder}{user}/{lastEntry+1}.entry', 'w', encoding="utf-8") as file:
         json.dump(writeToFile, file)
 
 month = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -186,7 +192,7 @@ class dialogue:
         style=['',colors.data,colors.message,colors.data,colors.message,f'\n{colors.red}',colors.message,'\n',colors.data,colors.message]
         return text,style            
     def importFilesResult():
-        text=['Imported ',f'{entriesImported}',' entries to folder "',f'{dataFolder}{currentUser}','"']
+        text=['Imported ',f'{iter}',' entries to folder "',f'{dataFolder}{currentUser}','"']
         style=['',colors.data,colors.message,colors.data,colors.message]
         return text,style
     def importedEntryMessage():
@@ -209,6 +215,14 @@ class dialogue:
         text=['Logging off, Have a good day ',f'{currentUser}','.']
         style=['\n',colors.special,colors.message]
         return text,style
+    def errReadFile(filename):
+        text=[f'There was a error while reading {filename}, it is either corrupted or in a incompatible format.']
+        style=[colors.red]
+        return text,style
+    def holder():
+        text=[]
+        style=[]
+        return text,style
     def holder():
         text=[]
         style=[]
@@ -218,8 +232,8 @@ class colors:
     label = '\033[38;2;220;140;60m'
     data = '\033[38;2;200;180;90m'
     readable = '\033[32m'
-    encrypted = '\033[91m'
-    unreadable = '\033[38;2;255;221;0m'
+    unreadable = '\033[91m'
+    encrypted = '\033[38;2;255;221;0m'
     green = '\033[32m'
     red = '\033[91m'
     darkRed = '\033[38;2;160;0;0m'
@@ -227,7 +241,10 @@ class colors:
     message = '\033[38;2;220;140;60m'
     special = '\033[38;2;180;150;120m'
     def get(color):
-        return getattr(colors, color)
+        try:
+            return getattr(colors, color)
+        except:
+            return colors.white
 
 #creates the Data folder ('C:/LucaSoft J.O.U.R.N.A.L/') if it doesn't exists
 if(os.path.exists(f"{dataFolder}") == False):
@@ -324,8 +341,8 @@ def longestInArray(array):
 
 #open users json dictionary, or define it if it doesn't exists.
 if os.path.exists(f"{dataFolder}users.json"):
-    f = open(f"{dataFolder}users.json")
-    user = json.load(f)
+    with open(f"{dataFolder}users.json", encoding="utf-8") as f:
+        user = json.load(f)
 else:
     user = {}
 
@@ -333,20 +350,22 @@ def removeTemptxt():
     if(os.path.exists(f'{dataFolder}temp.txt')):
         os.remove(f'{dataFolder}temp.txt')
 
-def fileStatus(currentUser,file,password=False):
+def fileStatus(file,user=False,password=False):
     if(password == False):
         global currentPassword
         password = currentPassword
-    fileData = readEntryFile(currentUser,file)
+    if(user == False):
+        global currentUser
+        user = currentUser
+    fileData = readEntryFile(file,user)
     if(fileData):
         try:
             decrypt(getEntry(fileData),password)
-            isReadable= 2
+            return 2
         except:
-            isReadable= 1
+            return 1
     else:
-        isReadable= 0
-    return isReadable
+        return 0
 #sets userConnected to false, it's the flag that keeps the login loop going.
 userConnected = False
 #Login Loop
@@ -394,7 +413,7 @@ while(userConnected == False):
                 currentPassword = currentPassword.encode("utf8")
                 hashKey = hashlib.sha1(currentPassword).hexdigest()
                 user[currentUser] = {'password': hashKey}
-                with open(f"{dataFolder}users.json", 'w') as f:
+                with open(f"{dataFolder}users.json", 'w', encoding="utf-8") as f:
                     json.dump(user, f)
                 if(os.path.exists(f"{dataFolder}{currentUser}") == False):
                     os.mkdir(f"{dataFolder}{currentUser}")
@@ -446,31 +465,34 @@ while(True):
             write(dialogue.listEntries3())
         if(len(folderFiles) != 0):
             write(dialogue.listEntries4())
-            length = longestInArray(folderFiles)+13
+            length = longestInArray(folderFiles)+3
             for file in folderFiles:
-                toWrite = f"    file: {file}  "
-                offset = length - len(toWrite)
-                toWrite += ' ' * offset
-                isReadable = fileStatus(currentUser,file)
+                offset = length - len(file)
+                fileLabel = f'{file}' + (' ' * offset)
+                isReadable = fileStatus(file)
                 if(isReadable != 0):
-                    fileData = readEntryFile(currentUser,file)
+                    fileData = readEntryFile(file)
                     if(isReadable == 1):
-                        isReadable = "encrypted "
+                        isReadable = "encrypted"
                     if(isReadable == 2):
-                        isReadable = "readable  "
-                    write([[toWrite,isReadable,'   Registered Owner: ',fileData['user']],[colors.message,colors.get(isReadable),colors.message,colors.data]],1)
+                        isReadable = "readable"
+                    offset = 11 - len(isReadable)
+                    isReadableLabel = isReadable + (' ' * offset)
+                    write([['    file: ',fileLabel,isReadableLabel,'   Registered Owner: ',fileData['user']],[colors.message,colors.data,colors.get(isReadable),colors.message,colors.special]],1)
                 else:
                     isReadable = "unreadable"
-                    write([[toWrite,isReadable,'   There was a error while reading the file, it is either corrupted or in a incompatible format.'],[colors.message,colors.get(isReadable),colors.red]],1)
+                    isReadableLabel = isReadable + (' ' * offset)
+                    write([['    file: ',fileLabel,isReadableLabel,'   There was a error while reading the file, it is either corrupted or in a incompatible format.'],[colors.message,colors.data,colors.get(isReadable),colors.red]],1)
         write(dialogue.goBackToMain())
         getpass.getpass("")
     elif(instruction == "3"):
         write(dialogue.viewEntry1())
-        entryToView = askUser()
-        if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}.entry')):
-            fileData = readEntryFile(currentUser,f'{entryToView}.entry')
-            #check if file loaded
-            if(fileData):
+        numEntryToView = askUser()
+        entryToView = f'{numEntryToView}.entry'
+        if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}')):
+            isReadable = fileStatus(entryToView)
+            fileData = readEntryFile(entryToView)
+            if(isReadable == 2):
                 entry = toText(decrypt(getEntry(fileData),currentPassword))
                 write(dialogue.viewEntry2())
                 time.sleep(0.5)
@@ -481,7 +503,7 @@ while(True):
                     time.sleep(0.3)
                 write(dialogue.eol())
             else :
-                write(dialogue.errWrongPwd())
+                write(dialogue.errReadFile(entryToView))
             write(dialogue.goBackToMain())
             getpass.getpass("")
     elif(instruction == "4"):
@@ -493,32 +515,22 @@ while(True):
             else:
                 clear()
                 entryNum = entryToView.replace(".entry","")
-                fileData = readEntryFile(currentUser,f'{entryToView}')
-                #check if file loaded
-                if(fileData):
-                    try:
-                        entry = toText(decrypt(getEntry(fileData),currentPassword))
-                        write(dialogue.viewEntry2())
-                        time.sleep(0.5)
-                        clear()
-                        for line in entry.splitlines():
-                            printText(f'{line}\n')
-                            winsound.Beep(1650, 20)
-                            time.sleep(0.3)
-                        write(dialogue.eol())
-                        print('\n\n')
-                        write(dialogue.readAllEndMessage())
-                    except:
-                        write(dialogue.errWrongPwd())
-                        printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
-                        printText(f'\nERROR : could not decrypt entry {entryToView}.')
-                        resetWriteSpeed()
+                isReadable = fileStatus(entryToView)
+                if(isReadable == 2):
+                    fileData = readEntryFile(entryToView)
+                    entry = toText(decrypt(getEntry(fileData),currentPassword))
+                    write(dialogue.viewEntry2())
+                    time.sleep(0.5)
+                    clear()
+                    for line in entry.splitlines():
+                        printText(f'{line}\n')
+                        winsound.Beep(1650, 20)
+                        time.sleep(0.3)
+                    write(dialogue.eol())
+                    print('\n\n')
+                    write(dialogue.readAllEndMessage())
                 else:
-                    write(dialogue.errWrongPwd())
-                    #keep that for now, will change this when the new log file system is added
-                    printText(f'\n[/!\] THIS IS A TEMPORARY ERROR MESSAGE [/!\]')
-                    printText(f'\nERROR : could not read entry n°{entryNum} ({entryToView}).')
-                    resetWriteSpeed()
+                    write(dialogue.errReadFile(entryToView))
                 write(dialogue.continueOrExit())
                 stopReadLogs = askUser()
     elif(instruction == "5"):
@@ -530,13 +542,15 @@ while(True):
             write(dialogue.importFilesConfirm())
             confirmImport = askUser()
             if(confirmImport.lower() == "continue"):
-                entriesImported = 0
+                iter = 0
                 folderFiles = updateFolderFilesImport()
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
-                    pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
+                    with open(f"{dataFolder}import_{currentUser}/{entry}", 'r', encoding="utf-8") as file:
+                        writeEntryFile(currentUser,currentPassword,encrypt(file.read(),currentPassword))
+                    #pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
                     write(dialogue.importedEntryMessage(),1)
-                    entriesImported += 1
+                    iter += 1
                     winsound.Beep(1650, 20)
                 inportedFiles = updateFolderFiles()
                 write(dialogue.importFilesResult())
@@ -558,12 +572,20 @@ while(True):
             iter = 0
             for entry in folderFiles:
                 entryNum = entry.replace(".entry","")
-                try:
-                    pyAesCrypt.decryptFile(f'{dataFolder}{currentUser}/{entry}', f"{dataFolder}exported_{currentUser}/{entryNum}.log", str(currentPassword), bufferSize) 
-                    write(dialogue.exportedEntryMessage(),1)
-                    iter += 1
-                except ValueError:
-                    write(dialogue.errWrongPwd())
+                isReadable = fileStatus(entry)
+                if(isReadable == 2):
+                    try:
+                        fileData = readEntryFile(entry)
+                        entryText = toText(decrypt(getEntry(fileData),currentPassword))
+                        with open(f"{dataFolder}exported_{currentUser}/{entryNum}.log", 'w', encoding="utf-8") as file:
+                            file.write(entryText)
+                        write(dialogue.exportedEntryMessage(),1)
+                        iter += 1
+                    except:
+                        write(dialogue.errReadFile(entry))
+                        time.sleep(0.5)
+                else:
+                    write(dialogue.errReadFile(entry))
                     time.sleep(0.5)
                 winsound.Beep(1650, 20)
             exportedFiles = next(os.walk(f"{dataFolder}exported_{currentUser}"))[2]
