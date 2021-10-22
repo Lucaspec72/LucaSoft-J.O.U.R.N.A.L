@@ -1,5 +1,16 @@
-import time, sys, hashlib, datetime, json, os, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
-from pytimedinput import timedInput
+import os
+try:
+    import time, sys, hashlib, datetime, json, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
+    from pytimedinput import timedInput
+except:
+    print("Error, missing modules. Trying to download the required modules...")
+    os.system("python -m pip install -r pyAesCrypt,pytimedinput,texteditor --quiet")
+try:
+    import time, sys, hashlib, datetime, json, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
+    from pytimedinput import timedInput
+except:
+    print('Could not load program, missing modules')
+    raise SystemExit
 bufferSize = 64 * 1024 
 dataFolder = 'C:/LucaSoft J.O.U.R.N.A.L/'
 writeSpeed = 0.03
@@ -7,11 +18,6 @@ writeSpeed = 0.03
 #PROGRAM VERSION
 progVer = "0.7.7"
 
-
-
-#MEMO, ADD ERROR HANDLING TO EVERYTHING
-
-#new file system functions, might need to be improved at a later date
 def encrypt(data, pwd):
     global bufferSize
     try:
@@ -84,16 +90,8 @@ class dialogue:
         text=['Please enter your password : ']
         style=['']
         return text,style
-    def loginGreet1():
-        text=['Good morning, ',f'{currentUser}','.']
-        style=[colors.message,colors.special,colors.message]
-        return text,style
-    def loginGreet2():
-        text=['Good afternoon, ',f'{currentUser}','.']
-        style=[colors.message,colors.special,colors.message]
-        return text,style
-    def loginGreet3():
-        text=['Good evening, ',f'{currentUser}','.']
+    def loginGreet(timeofday):
+        text=[f'Good {timeofday}, ',f'{currentUser}','.']
         style=[colors.message,colors.special,colors.message]
         return text,style
     def loginErrPwd():
@@ -367,6 +365,15 @@ def fileStatus(file,user=False,password=False):
             return 1
     else:
         return 0
+
+def getTimeOfDay():
+    getTime = datetime.datetime.now()
+    if getTime.hour < 12:
+        return 'morning'
+    elif 12 <= getTime.hour < 18:
+        return 'afternoon'
+    else:
+        return 'evening'
 #sets userConnected to false, it's the flag that keeps the login loop going.
 userConnected = False
 #Login Loop
@@ -388,14 +395,8 @@ while(userConnected == False):
         currentPassword = currentPassword.encode("utf8")
         hashKey = hashlib.sha1(currentPassword).hexdigest()
         if hashKey == user[currentUser]['password'] :
-            currentTime = datetime.datetime.now()
             userConnected = True
-            if currentTime.hour < 12:
-                write(dialogue.loginGreet1())
-            elif 12 <= currentTime.hour < 18:
-                write(dialogue.loginGreet2())
-            else:
-                write(dialogue.loginGreet3())
+            write(dialogue.loginGreet(getTimeOfDay()))
         else:
             write(dialogue.loginErrPwd())
     elif(currentUser == ""):
@@ -418,14 +419,8 @@ while(userConnected == False):
                     json.dump(user, f)
                 if(os.path.exists(f"{dataFolder}{currentUser}") == False):
                     os.mkdir(f"{dataFolder}{currentUser}")
-                currentTime = datetime.datetime.now()
                 userConnected = True
-                if currentTime.hour < 12:
-                    write(dialogue.loginGreet1())  
-                elif 12 <= currentTime.hour < 18:
-                    write(dialogue.loginGreet2())
-                else:
-                    write(dialogue.loginGreet3())
+                write(dialogue.loginGreet(getTimeOfDay()))
             else:
                 write(dialogue.loginNewUsrPwdErr())
         else:
