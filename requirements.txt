@@ -1,0 +1,3 @@
+pyAesCrypt==6.0.0
+pytimedinput==2.0.0
+texteditor==1.3
