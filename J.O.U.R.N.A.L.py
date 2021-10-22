@@ -452,9 +452,14 @@ while(True):
         try:
             logEntry = texteditor.open(encoding='utf8')
         except RuntimeError:
-            write([["ERROR, Coudn't find the default text editor of the system"],[colors.red]])
-            write(dialogue.goBackToMain())
+            write([["ERROR, Coudn't find the default text editor of the system, trying to use fallback method..."],[colors.red]])
+            write([["when you finished writing your entry, press start : "],[]])
+            open(f'{dataFolder}temp.tmp', 'w', encoding="utf-8").close()
+            os.startfile(f'{dataFolder}temp.tmp')
             getpass.getpass("")
+            with open(f'{dataFolder}temp.tmp','r', encoding="utf-8") as file:
+                logEntry = file.read()
+            os.remove(f'{dataFolder}temp.tmp')
         if(logEntry != ""):
              timeFormated = datetime.datetime.now()
              writeEntryFile(currentUser,currentPassword,encrypt(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}",currentPassword))
