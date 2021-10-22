@@ -11,15 +11,14 @@ try:
 except:
     print('Could not load program, missing modules')
     raise SystemExit
-bufferSize = 64 * 1024 
-dataFolder = 'C:/LucaSoft J.O.U.R.N.A.L/'
-writeSpeed = 0.03
+BUFFERSIZE = 64 * 1024 
+DATAFOLDER = 'C:/LucaSoft J.O.U.R.N.A.L/'
+WRITESPEED = 0.03
 
 #PROGRAM VERSION
 progVer = "0.7.7"
 
 def encrypt(data, pwd):
-    global bufferSize
     try:
         pwd.decode("utf8")
     except UnicodeError:
@@ -27,11 +26,10 @@ def encrypt(data, pwd):
     data = bytes(data,'UTF-8')
     input = io.BytesIO(data)
     output = io.BytesIO()
-    pyAesCrypt.encryptStream(input, output, str(pwd), bufferSize)
+    pyAesCrypt.encryptStream(input, output, str(pwd), BUFFERSIZE)
     return output.getvalue()
 
 def decrypt(encryptedData, pwd):
-    global bufferSize
     try:
         pwd.decode("utf8")
     except UnicodeError:
@@ -39,7 +37,7 @@ def decrypt(encryptedData, pwd):
     input = io.BytesIO(encryptedData)
     output = io.BytesIO()
     ctlen = len(encryptedData)
-    pyAesCrypt.decryptStream(input, output, str(pwd), bufferSize, ctlen)
+    pyAesCrypt.decryptStream(input, output, str(pwd), BUFFERSIZE, ctlen)
     return output.getvalue()
 
 def toText(input):
@@ -50,10 +48,8 @@ def getEntry(input):
 
 def readEntryFile(entry,user=False):
     if(user == False):
-        global currentUser
         user = currentUser
-    global dataFolder
-    fullPath = f'{dataFolder}{user}/{entry}'
+    fullPath = f'{DATAFOLDER}{user}/{entry}'
     if(os.path.exists(fullPath)):
         try:
             with open(fullPath,'r', encoding="utf-8") as file:
@@ -73,7 +69,7 @@ def writeEntryFile(user,pwd,entry):
         lastEntry = int(folderFiles[-1].replace(".entry",""))
     else:
         lastEntry = 0
-    with open(f'{dataFolder}{user}/{lastEntry+1}.entry', 'w', encoding="utf-8") as file:
+    with open(f'{DATAFOLDER}{user}/{lastEntry+1}.entry', 'w', encoding="utf-8") as file:
         json.dump(writeToFile, file)
 
 month = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -187,11 +183,11 @@ class dialogue:
         style=['',colors.label,colors.message]
         return text,style
     def importFilesConfirm():
-        text=['Please put all your log files in the "',f'{dataFolder}import_{currentUser}',f'" folder, with name formating entrynumber.log (exemple : ',f'1.log',' )','/!\\ DISCLAIMER : CURRENT ENTRIES WILL GET OVERWRITTEN /!\\',' You may want to back up your logs first.','Please type "','continue','" to continue, otherwise operation will be canceled : ']
+        text=['Please put all your log files in the "',f'{DATAFOLDER}import_{currentUser}',f'" folder, with name formating entrynumber.log (exemple : ',f'1.log',' )','/!\\ DISCLAIMER : CURRENT ENTRIES WILL GET OVERWRITTEN /!\\',' You may want to back up your logs first.','Please type "','continue','" to continue, otherwise operation will be canceled : ']
         style=['',colors.data,colors.message,colors.data,colors.message,f'\n{colors.red}',colors.message,'\n',colors.data,colors.message]
         return text,style            
     def importFilesResult():
-        text=['Imported ',f'{iter}',' entries to folder "',f'{dataFolder}{currentUser}','"']
+        text=['Imported ',f'{iter}',' entries to folder "',f'{DATAFOLDER}{currentUser}','"']
         style=['',colors.data,colors.message,colors.data,colors.message]
         return text,style
     def importedEntryMessage():
@@ -207,7 +203,7 @@ class dialogue:
         style=[colors.message,colors.data]
         return text,style
     def exportFilesResult():
-        text=['Exported ',f'{iter}',' entries to folder "',f'{dataFolder}exported_{currentUser}','"']
+        text=['Exported ',f'{iter}',' entries to folder "',f'{DATAFOLDER}exported_{currentUser}','"']
         style=['',colors.data,colors.message,colors.data,colors.message]
         return text,style
     def exitMessage():
@@ -217,14 +213,6 @@ class dialogue:
     def errReadFile(filename):
         text=[f'There was a error while reading {filename}, it is either corrupted or in a incompatible format.']
         style=[colors.red]
-        return text,style
-    def holder():
-        text=[]
-        style=[]
-        return text,style
-    def holder():
-        text=[]
-        style=[]
         return text,style
 
 class colors:
@@ -246,26 +234,26 @@ class colors:
             return colors.white
 
 #creates the Data folder ('C:/LucaSoft J.O.U.R.N.A.L/') if it doesn't exists
-if(os.path.exists(f"{dataFolder}") == False):
-    os.mkdir(f"{dataFolder}")
+if(os.path.exists(f"{DATAFOLDER}") == False):
+    os.mkdir(f"{DATAFOLDER}")
 
 #function to print text with typewriter effect
 def printText(str):
-    global writeSpeed
+    global WRITESPEED
     for letter in str:
         print(letter, end="")
         sys.stdout.flush()
-        time.sleep(writeSpeed)
-        if((letter == ",") or (letter == '.') and (writeSpeed != 0)):
+        time.sleep(WRITESPEED)
+        if((letter == ",") or (letter == '.') and (WRITESPEED != 0)):
             time.sleep(0.07)
         if msvcrt.kbhit():
-            writeSpeed = 0
+            WRITESPEED = 0
             msvcrt.getch()
 
-#resets the writeSpeed if it was set to zero
-def resetWriteSpeed():
-    global writeSpeed
-    writeSpeed = 0.03
+#resets the WRITESPEED if it was set to zero
+def resetWRITESPEED():
+    global WRITESPEED
+    WRITESPEED = 0.03
 
 #makes two beeps, mostly used after writing stuff on-screen.
 def endLineSound():
@@ -281,7 +269,7 @@ def successSound():
 #returns the list of all files in the current user's folder that have the extension .entry
 def updateFolderFiles():
     filesArray = []
-    for root, dirs, files in os.walk(f"{dataFolder}{currentUser}"):
+    for root, dirs, files in os.walk(f"{DATAFOLDER}{currentUser}"):
         for file in files:
             if file.endswith(".entry"):
                 fileNum = file.replace(".entry","")
@@ -305,13 +293,13 @@ def write(obj,list=0):
         if(list == 0):
             print(colors.message, end="")
             endLineSound()
-            resetWriteSpeed()
+            resetWRITESPEED()
             
 
 #returns the list of all files in the current user's IMPORT folder that have the extension .log, only used once currently i think. 
 def updateFolderFilesImport():
     filesArray = []
-    for root, dirs, files in os.walk( f"{dataFolder}import_{currentUser}"):
+    for root, dirs, files in os.walk( f"{DATAFOLDER}import_{currentUser}"):
         for file in files:
             if file.endswith(".log"):
                 fileNum = file.replace(".log","")
@@ -339,22 +327,20 @@ def longestInArray(array):
           return max_len
 
 #open users json dictionary, or define it if it doesn't exists.
-if os.path.exists(f"{dataFolder}users.json"):
-    with open(f"{dataFolder}users.json", encoding="utf-8") as f:
+if os.path.exists(f"{DATAFOLDER}users.json"):
+    with open(f"{DATAFOLDER}users.json", encoding="utf-8") as f:
         user = json.load(f)
 else:
     user = {}
 
 def removeTemptxt():
-    if(os.path.exists(f'{dataFolder}temp.txt')):
-        os.remove(f'{dataFolder}temp.txt')
+    if(os.path.exists(f'{DATAFOLDER}temp.txt')):
+        os.remove(f'{DATAFOLDER}temp.txt')
 
 def fileStatus(file,user=False,password=False):
     if(password == False):
-        global currentPassword
         password = currentPassword
     if(user == False):
-        global currentUser
         user = currentUser
     fileData = readEntryFile(file,user)
     if(fileData):
@@ -415,10 +401,10 @@ while(userConnected == False):
                 currentPassword = currentPassword.encode("utf8")
                 hashKey = hashlib.sha1(currentPassword).hexdigest()
                 user[currentUser] = {'password': hashKey}
-                with open(f"{dataFolder}users.json", 'w', encoding="utf-8") as f:
+                with open(f"{DATAFOLDER}users.json", 'w', encoding="utf-8") as f:
                     json.dump(user, f)
-                if(os.path.exists(f"{dataFolder}{currentUser}") == False):
-                    os.mkdir(f"{dataFolder}{currentUser}")
+                if(os.path.exists(f"{DATAFOLDER}{currentUser}") == False):
+                    os.mkdir(f"{DATAFOLDER}{currentUser}")
                 userConnected = True
                 write(dialogue.loginGreet(getTimeOfDay()))
             else:
@@ -427,8 +413,8 @@ while(userConnected == False):
             write(dialogue.loginNewUsrCancel())
 
 #checks if user folder doesn't exists, and creates it if it doesn't.
-if(os.path.exists(f"{dataFolder}{currentUser}") == False):
-    os.mkdir(f"{dataFolder}{currentUser}")
+if(os.path.exists(f"{DATAFOLDER}{currentUser}") == False):
+    os.mkdir(f"{DATAFOLDER}{currentUser}")
 #checks if the temp.txt folder exists.
 
 
@@ -449,12 +435,12 @@ while(True):
         except RuntimeError:
             write([["ERROR, Coudn't find the default text editor of the system, trying to use fallback method..."],[colors.red]])
             write([["when you finished writing your entry, press start : "],[]])
-            open(f'{dataFolder}temp.tmp', 'w', encoding="utf-8").close()
-            os.startfile(f'{dataFolder}temp.tmp')
+            open(f'{DATAFOLDER}temp.tmp', 'w', encoding="utf-8").close()
+            os.startfile(f'{DATAFOLDER}temp.tmp')
             getpass.getpass("")
-            with open(f'{dataFolder}temp.tmp','r', encoding="utf-8") as file:
+            with open(f'{DATAFOLDER}temp.tmp','r', encoding="utf-8") as file:
                 logEntry = file.read()
-            os.remove(f'{dataFolder}temp.tmp')
+            os.remove(f'{DATAFOLDER}temp.tmp')
         if(logEntry != ""):
              timeFormated = datetime.datetime.now()
              writeEntryFile(currentUser,currentPassword,encrypt(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}",currentPassword))
@@ -496,7 +482,7 @@ while(True):
         write(dialogue.viewEntry1())
         numEntryToView = askUser()
         entryToView = f'{numEntryToView}.entry'
-        if(os.path.exists(f'{dataFolder}{currentUser}/{entryToView}')):
+        if(os.path.exists(f'{DATAFOLDER}{currentUser}/{entryToView}')):
             isReadable = fileStatus(entryToView)
             fileData = readEntryFile(entryToView)
             if(isReadable == 2):
@@ -545,8 +531,8 @@ while(True):
         write(dialogue.importFiles1())
         confirmImport = msvcrt.getch()
         if (confirmImport.lower() == b"y"):
-            if(os.path.exists(f"{dataFolder}import_{currentUser}") == False):
-                os.mkdir(f"{dataFolder}import_{currentUser}")
+            if(os.path.exists(f"{DATAFOLDER}import_{currentUser}") == False):
+                os.mkdir(f"{DATAFOLDER}import_{currentUser}")
             write(dialogue.importFilesConfirm())
             confirmImport = askUser()
             if(confirmImport.lower() == "continue"):
@@ -554,29 +540,28 @@ while(True):
                 folderFiles = updateFolderFilesImport()
                 for entry in folderFiles:
                     entryNum = entry.replace(".log","")
-                    with open(f"{dataFolder}import_{currentUser}/{entry}", 'r', encoding="utf-8") as file:
+                    with open(f"{DATAFOLDER}import_{currentUser}/{entry}", 'r', encoding="utf-8") as file:
                         writeEntryFile(currentUser,currentPassword,encrypt(file.read(),currentPassword))
-                    #pyAesCrypt.encryptFile(f"{dataFolder}import_{currentUser}/{entry}", f'{dataFolder}{currentUser}/{entryNum}.entry', str(currentPassword), bufferSize) 
                     write(dialogue.importedEntryMessage(),1)
                     iter += 1
                     winsound.Beep(1650, 20)
                 inportedFiles = updateFolderFiles()
                 write(dialogue.importFilesResult())
-                if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
-                    shutil.rmtree(f"{dataFolder}import_{currentUser}")
+                if(os.path.exists(f"{DATAFOLDER}import_{currentUser}") == True):
+                    shutil.rmtree(f"{DATAFOLDER}import_{currentUser}")
                 successSound()
                 write(dialogue.goBackToMain())
                 getpass.getpass('')
             else:
-                if(os.path.exists(f"{dataFolder}import_{currentUser}") == True):
-                    shutil.rmtree(f"{dataFolder}import_{currentUser}")
+                if(os.path.exists(f"{DATAFOLDER}import_{currentUser}") == True):
+                    shutil.rmtree(f"{DATAFOLDER}import_{currentUser}")
     elif(instruction == "6"):
         write(dialogue.exportFiles1())
         confirmExport = msvcrt.getch()
         if (confirmExport.lower() == b"y"):
             folderFiles = updateFolderFiles()
-            if(os.path.exists(f"{dataFolder}exported_{currentUser}") == False):
-                os.mkdir(f"{dataFolder}exported_{currentUser}")
+            if(os.path.exists(f"{DATAFOLDER}exported_{currentUser}") == False):
+                os.mkdir(f"{DATAFOLDER}exported_{currentUser}")
             iter = 0
             for entry in folderFiles:
                 entryNum = entry.replace(".entry","")
@@ -585,7 +570,7 @@ while(True):
                     try:
                         fileData = readEntryFile(entry)
                         entryText = toText(decrypt(getEntry(fileData),currentPassword))
-                        with open(f"{dataFolder}exported_{currentUser}/{entryNum}.log", 'w', encoding="utf-8") as file:
+                        with open(f"{DATAFOLDER}exported_{currentUser}/{entryNum}.log", 'w', encoding="utf-8") as file:
                             file.write(entryText)
                         write(dialogue.exportedEntryMessage(),1)
                         iter += 1
@@ -596,7 +581,7 @@ while(True):
                     write(dialogue.errReadFile(entry))
                     time.sleep(0.5)
                 winsound.Beep(1650, 20)
-            exportedFiles = next(os.walk(f"{dataFolder}exported_{currentUser}"))[2]
+            exportedFiles = next(os.walk(f"{DATAFOLDER}exported_{currentUser}"))[2]
             write(dialogue.exportFilesResult())
             successSound()
             write(dialogue.goBackToMain())
