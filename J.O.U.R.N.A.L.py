@@ -4,7 +4,7 @@ try:
     from pytimedinput import timedInput
 except:
     print("Error, missing modules. Trying to download the required modules...")
-    os.system("python -m pip install -r pyAesCrypt,pytimedinput,texteditor --quiet")
+    os.system("python -m pip install -r requirements.txt --quiet")
 try:
     import time, sys, hashlib, datetime, json, texteditor, winsound, pyAesCrypt, shutil, getpass, msvcrt, io
     from pytimedinput import timedInput
