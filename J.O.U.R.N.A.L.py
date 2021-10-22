@@ -448,7 +448,13 @@ while(True):
     clear()
     if(instruction == "1"):
         write(dialogue.createLog1())
-        logEntry = texteditor.open(encoding='utf8')
+        #temporary error catch for the issue reported by the_programmer_2215
+        try:
+            logEntry = texteditor.open(encoding='utf8')
+        except RuntimeError:
+            write([["ERROR, Coudn't find the default text editor of the system"],[colors.red]])
+            write(dialogue.goBackToMain())
+            getpass.getpass("")
         if(logEntry != ""):
              timeFormated = datetime.datetime.now()
              writeEntryFile(currentUser,currentPassword,encrypt(f"{currentUser}'s Journal, Entry N°{len(folderFiles)+1}. Written on {month[(timeFormated.month-1)]} {timeFormated.day} {timeFormated.year} at {format(timeFormated.hour, '02')}:{format(timeFormated.minute, '02')}\n\n{logEntry}",currentPassword))
