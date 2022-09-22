@@ -3,7 +3,7 @@ The J.O.U.R.N.A.L (Just anOther User Redaction & Navigation Assistant by Lucaspe
 
 How to use :
 
-When starting the program, it will prompt you to enter your username (case sensitive), and your password (or ask you to create one if the account doesn't exists yet). The password of a user cannot currently be changed, but the option should be added within a few weeks.
+When starting the program, it will prompt you to enter your username (case sensitive), and your password (or ask you to create one if the account doesn't exists yet). The password of a user cannot currently be changed, but the option is planned.
 
 
 Note: this is a WIP project i've started around october 8 2021.
