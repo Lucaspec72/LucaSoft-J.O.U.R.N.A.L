@@ -6,7 +6,7 @@ How to use :
 When starting the program, it will prompt you to enter your username (case sensitive), and your password (or ask you to create one if the account doesn't exists yet). The password of a user cannot currently be changed, but the option is planned.
 
 
-Note: this is a WIP project i've started around october 8 2021.
+Note: this is a WIP project i've started around october 8 2021, and haven't worked much on since then. Might come back to it in the future but for now it's in the attic. If you need any help with it just contact me on discord or open a issue here. Hopefully I'll see it.
 
 Here are some screenshot to show off how the program currently looks :
 
